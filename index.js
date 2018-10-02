@@ -31,17 +31,17 @@ export class Container {
     }
 }
 
-const passSelector = s => s
+const pass = s => s
 
-export function subscribeOnly (container, selector = passSelector) {
-    return makeFactory(container, () => selector(container.state), React.PureComponent)
+export function subscribeOnly (container, selector = pass) {
+    return makeDecorator(container, () => selector(container.state), React.PureComponent)
 }
 
-export function subscribe (container, selector = passSelector) {
-    return makeFactory(container, () => selector(container.state))
+export function subscribe (container, selector = pass) {
+    return makeDecorator(container, () => selector(container.state))
 }
 
-function makeFactory (container, getState, Component = React.Component) {
+function makeDecorator (container, getState, Component = React.Component) {
     return Wrapped =>
         class SubscribeWrap extends Component {
             constructor (props) {
@@ -65,8 +65,8 @@ function makeFactory (container, getState, Component = React.Component) {
 
                     const state = getState()
                     if (state === this._state) return resolve()
-                    this._state = state
 
+                    this._state = state
                     this.forceUpdate(resolve)
                 })
             }
