@@ -11,7 +11,7 @@ export class Container {
     }
 
     $$subscribe (component) {
-        this.$$components.unshift(component)
+        this.$$components.push(component)
     }
 
     $$unsubscribe (component) {
@@ -28,7 +28,7 @@ export class Container {
             if (!nextState) return
 
             this.state = { ...prevState, ...Object(nextState) }
-            return Promise.all(this.$$components.map(c => c.onUpdate(this, updateId)))
+            return Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(this, updateId)))
         })
     }
 }
