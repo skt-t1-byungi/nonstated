@@ -7,5 +7,8 @@
     "eslint": "^5.6.1",
     "eslint-config-byungi": "^0.2.1",
     "react": "^16.5.2"
+  },
+  "dependencies": {
+    "fast-deep-equal": "^2.0.1"
   }
 }

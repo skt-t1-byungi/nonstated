@@ -1,70 +1,80 @@
 import React from 'react'
+import equal from 'fast-deep-equal'
 
 let uuid = 0
 
 export class Container {
     constructor () {
         this.state = null
-        this._components = []
+        this.$$updateId = null
+        this.$$components = []
     }
 
-    subscribe (component) {
-        this._components.push(component)
+    $$subscribe (component) {
+        this.$$components.unshift(component)
     }
 
-    unsubscribe (component) {
-        this._components = this._components.filter(c => c !== component)
+    $$unsubscribe (component) {
+        this.$$components = this.$$components.filter(c => c !== component)
     }
 
     setState (updater) {
-        if (typeof updater !== 'function') updater = () => updater
-
         return Promise.resolve().then(() => {
-            const updateId = uuid++
+            const updateId = this.$$updateId = uuid++
             const prevState = this.state
-            const newState = updater(prevState)
-            if (!newState) return
-            this.state = { ...prevState, ...Object(newState) }
-            const promises = this._components.map(c => c.onUpdate(updateId))
-            return Promise.all(promises)
+            const nextState = typeof updater === 'function' ? updater(prevState) : updater
+            if (!nextState) return
+
+            this.state = { ...prevState, ...Object(nextState) }
+            return Promise.all(this.$$components.map(c => c.onUpdate(this, updateId)))
         })
     }
 }
 
-const pass = s => s
+const passThrough = v => v
 
-export function subscribeOnly (container, selector = pass) {
-    return makeDecorator(container, () => selector(container.state), React.PureComponent)
+export function subscribe (containers, selector = passThrough) {
+    return makeDecorator([].concat(containers), selector)
 }
 
-export function subscribe (container, selector = pass) {
-    return makeDecorator(container, () => selector(container.state))
+export function subscribeOnly (containers, selector = passThrough) {
+    return makeDecorator([].concat(containers), selector, true)
 }
 
-function makeDecorator (container, getState, Component = React.Component) {
-    return Wrapped =>
-        class SubscribeWrap extends Component {
+function makeDecorator (containers, selector, isPure) {
+    const getState = () => selector(containers.map(c => c.state))
+
+    const BaseComponent = isPure ? React.PureComponent : React.Component
+
+    return Wrapped => {
+        return class SubscribeWrap extends BaseComponent {
             constructor (props) {
                 super(props)
-                this._lastUpdateId = null
+                this._updateIds = Array(containers.length)
                 this._state = getState()
             }
 
             componentDidMount () {
-                container.subscribe(this)
+                containers.forEach(container => container.$$subscribe(this))
             }
 
             componentWillUnmount () {
-                container.unsubscribe(this)
+                containers.forEach(container => container.$$unsubscribe(this))
             }
 
-            onUpdate (updateId) {
+            componentDidUpdate () {
+                this._updateIds = containers.map(container => container.$$updateId)
+            }
+
+            onUpdate (container, updateId) {
                 return new Promise(resolve => {
-                    if (this._lastUpdateId === updateId) return resolve()
-                    this._lastUpdateId = updateId
+                    if (this._updateIds.indexOf(updateId) !== -1) return resolve()
+
+                    const idx = containers.indexOf(container)
+                    this._updateIds[idx] = updateId
 
                     const state = getState()
-                    if (state === this._state) return resolve()
+                    if (equal(state, this._state)) return resolve()
 
                     this._state = state
                     this.forceUpdate(resolve)
@@ -75,4 +85,5 @@ function makeDecorator (container, getState, Component = React.Component) {
                 return <Wrapped {...this.props} />
             }
         }
+    }
 }
