@@ -21,8 +21,10 @@ export class Container {
     setState (updater) {
         return Promise.resolve().then(() => {
             const updateId = this.$$updateId = uuid++
+
             const prevState = this.state
             const nextState = typeof updater === 'function' ? updater(prevState) : updater
+
             if (!nextState) return
 
             this.state = { ...prevState, ...Object(nextState) }
@@ -43,11 +45,10 @@ export function subscribeOnly (containers, selector = passThrough) {
 
 function makeDecorator (containers, selector, isPure) {
     const getState = () => selector(containers.map(c => c.state))
-
-    const BaseComponent = isPure ? React.PureComponent : React.Component
+    const Component = isPure ? React.PureComponent : React.Component
 
     return Wrapped => {
-        return class SubscribeWrap extends BaseComponent {
+        class SubscribeWrap extends Component {
             constructor (props) {
                 super(props)
                 this._updateIds = Array(containers.length)
@@ -68,22 +69,24 @@ function makeDecorator (containers, selector, isPure) {
 
             onUpdate (container, updateId) {
                 return new Promise(resolve => {
-                    if (this._updateIds.indexOf(updateId) !== -1) return resolve()
+                    if (this._updateIds.indexOf(updateId) > -1) return resolve()
 
                     const idx = containers.indexOf(container)
                     this._updateIds[idx] = updateId
 
-                    const state = getState()
-                    if (equal(state, this._state)) return resolve()
+                    const nextState = getState()
+                    if (equal(nextState, this._state)) return resolve()
 
-                    this._state = state
+                    this._state = nextState
                     this.forceUpdate(resolve)
                 })
             }
 
             render () {
-                return <Wrapped {...this.props} />
+                return React.createElement(Wrapped, this.props)
             }
         }
+
+        return SubscribeWrap
     }
 }
