@@ -10,7 +10,8 @@
     "repository": "https://github.com/skt-t1-byungi/nostated.git",
     "scripts": {
         "build": "microbundle --sourcemap false --target browser --external react",
-        "test": "ava"
+        "test": "ava",
+        "prepublishOnly": "yarn test & yarn build"
     },
     "files": [
         "dist"
@@ -27,6 +28,9 @@
     "dependencies": {
         "fast-deep-equal": "^2.0.1"
     },
+    "peerDependencies": {
+        "react": "^16.5.2"
+    },
     "eslintConfig": {
         "extends": "byungi/react"
     },
@@ -34,8 +38,8 @@
         "dist"
     ],
     "ava": {
-		"require": [
-			"esm"
-		]
-	}
+        "require": [
+            "esm"
+        ]
+    }
 }
