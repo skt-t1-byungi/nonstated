@@ -2,6 +2,7 @@ import React from 'react'
 import equal from 'fast-deep-equal'
 
 let uuid = 0
+const MAX_SAFE_INTEGER = 9007199254740991
 
 export class Container {
     constructor () {
@@ -20,6 +21,7 @@ export class Container {
 
     setState (updater) {
         return Promise.resolve().then(() => {
+            if (uuid === MAX_SAFE_INTEGER) uuid = -MAX_SAFE_INTEGER
             const updateId = this.$$updateId = uuid++
 
             const prevState = this.state
@@ -31,9 +33,20 @@ export class Container {
             return Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(this, updateId)))
         })
     }
+
+    c (selector, render) {
+        if (!render) {
+            render = selector
+            selector = passThrough
+        }
+
+        return subscribeOnly(this, selector)(({ states }) => render(states[0]))
+    }
 }
 
-const passThrough = v => v
+function passThrough (v) {
+    return v
+}
 
 export function subscribe (containers, selector = passThrough) {
     return makeDecorator([].concat(containers), selector)
@@ -44,7 +57,7 @@ export function subscribeOnly (containers, selector = passThrough) {
 }
 
 function makeDecorator (containers, selector, isPure) {
-    const getState = () => selector(containers.map(c => c.state))
+    const getStates = () => selector(containers.map(c => c.state))
     const Component = isPure ? React.PureComponent : React.Component
 
     return Wrapped => {
@@ -52,7 +65,7 @@ function makeDecorator (containers, selector, isPure) {
             constructor (props) {
                 super(props)
                 this._updateIds = Array(containers.length)
-                this._state = getState()
+                this._states = getStates()
             }
 
             componentDidMount () {
@@ -74,16 +87,16 @@ function makeDecorator (containers, selector, isPure) {
                     const idx = containers.indexOf(container)
                     this._updateIds[idx] = updateId
 
-                    const nextState = getState()
-                    if (equal(nextState, this._state)) return resolve()
+                    const nextStates = getStates()
+                    if (equal(nextStates, this._states)) return resolve()
 
-                    this._state = nextState
+                    this._states = nextStates
                     this.forceUpdate(resolve)
                 })
             }
 
             render () {
-                return React.createElement(Wrapped, this.props)
+                return React.createElement(Wrapped, { ...this.props, states: this._states })
             }
         }
 
