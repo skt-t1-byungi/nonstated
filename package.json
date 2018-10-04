@@ -32,7 +32,10 @@
         "react": "^16.5.2"
     },
     "eslintConfig": {
-        "extends": "byungi/react"
+        "extends": "byungi/react",
+        "rules": {
+            "react/prop-types": 0
+        }
     },
     "eslintIgnore": [
         "dist"

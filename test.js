@@ -3,24 +3,37 @@ import renderer from 'react-test-renderer'
 import { createElement } from 'react'
 import { Container, subscribe } from '.'
 
-test('basic', async t => {
-    const counter = new class extends Container {
-        constructor () {
-            super()
-            this.state = { num: 0 }
-        }
-        increment () {
-            return this.setState(s => ({ num: s.num + 1 }))
-        }
-        decrement () {
-            return this.setState(s => ({ num: s.num - 1 }))
-        }
-    }()
-    const View = subscribe([counter])(() => counter.state.num)
+class CounterContainer extends Container {
+    constructor () {
+        super()
+        this.state = { val: 0 }
+    }
+    increment () {
+        return this.setState(s => ({ val: s.val + 1 }))
+    }
+    decrement () {
+        return this.setState(s => ({ val: s.val - 1 }))
+    }
+}
 
-    const component = renderer.create(createElement(View))
+test('basic usage', async t => {
+    const counter = new CounterContainer()
+    const component = renderer.create(createElement(subscribe(counter)(() => counter.state.val)))
+
     t.is(component.toJSON(), '0')
+    await counter.increment()
+    t.is(component.toJSON(), '1')
+    await counter.increment()
+    t.is(component.toJSON(), '2')
+    await counter.decrement()
+    t.is(component.toJSON(), '1')
+})
 
+test('container.on() test', async t => {
+    const counter = new CounterContainer()
+    const component = renderer.create(counter.on(s => s.val))
+
+    t.is(component.toJSON(), '0')
     await counter.increment()
     t.is(component.toJSON(), '1')
     await counter.increment()

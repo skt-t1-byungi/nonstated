@@ -24,15 +24,13 @@ class CounterContainer extends Container{
 
 const counter = new CounterContainer()
 
-class Counter extends React.Component{
-    render() {
-        return (
-            <div>
-                <span>{counter.on(s => s.val)}</span>
-                <button onClick={() => counter.decrement()}> - </button>
-                <button onClick={() => counter.increment()}> + </button>
-            </div>)
-    }
+function Counter () {
+    return (
+        <div>
+            <span>{counter.on(s => s.val)}</span>
+            <button onClick={() => counter.decrement()}> - </button>
+            <button onClick={() => counter.increment()}> + </button>
+        </div>)
 }
 ```
 
