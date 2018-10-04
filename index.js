@@ -34,7 +34,7 @@ export class Container {
         })
     }
 
-    c (selector, render) {
+    on (selector, render) {
         if (!render) {
             render = selector
             selector = passThrough

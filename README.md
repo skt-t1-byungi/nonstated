@@ -26,7 +26,7 @@ class Counter extends React.Component{
     render() {
         return (
             <div>
-                <span>{counter.c(s => s.val)}</span>
+                <span>{counter.on(s => s.val)}</span>
                 <button onClick={() => counter.decrement()}> - </button>
                 <button onClick={() => counter.increment()}> + </button>
             </div>)
