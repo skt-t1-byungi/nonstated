@@ -8,7 +8,7 @@ export class Container {
     constructor () {
         this.state = null
         this.$$updateId = null
-        this.$$OnComponent = null
+        this.$$Box = null
         this.$$components = []
     }
 
@@ -35,17 +35,12 @@ export class Container {
         this.$$components = this.$$components.filter(c => c !== component)
     }
 
-    on (selector, render) {
-        if (!render) {
-            render = selector
-            selector = passThrough
+    on (render) {
+        if (!this.$$Box) {
+            this.$$Box = subscribe(this)(({ state, children }) => children(state))
         }
 
-        if (!this.$$OnComponent) {
-            this.$$OnComponent = subscribeOnly(this)(({ state, children }) => React.Children.only(children)(state))
-        }
-
-        return React.createElement(this.$$OnComponent, null, s => render(selector(s)))
+        return React.createElement(this.$$Box, null, render)
     }
 }
 
