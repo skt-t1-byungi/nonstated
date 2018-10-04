@@ -1,6 +1,8 @@
 # nonstated
 simple react state management library (inspired by unstated)
 
+> ⚠️ Work In Progress
+
 ## Install
 ```
 yarn add nonstated
