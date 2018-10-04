@@ -8,7 +8,7 @@ yarn add nonstated
 
 ## Usage
 ```jsx
-import {Container, subscribe} from 'nonstated'
+import {Container} from 'nonstated'
 
 class CounterContainer extends Container{
     state = {val: 0}
