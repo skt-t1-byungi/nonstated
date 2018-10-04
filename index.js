@@ -8,15 +8,8 @@ export class Container {
     constructor () {
         this.state = null
         this.$$updateId = null
+        this.$$OnComponent = null
         this.$$components = []
-    }
-
-    $$subscribe (component) {
-        this.$$components.push(component)
-    }
-
-    $$unsubscribe (component) {
-        this.$$components = this.$$components.filter(c => c !== component)
     }
 
     setState (updater) {
@@ -34,13 +27,25 @@ export class Container {
         })
     }
 
+    $$subscribe (component) {
+        this.$$components.push(component)
+    }
+
+    $$unsubscribe (component) {
+        this.$$components = this.$$components.filter(c => c !== component)
+    }
+
     on (selector, render) {
         if (!render) {
             render = selector
             selector = passThrough
         }
 
-        return subscribeOnly(this, selector)(({ states }) => render(states[0]))
+        if (!this.$$OnComponent) {
+            this.$$OnComponent = subscribeOnly(this)(({ state, children }) => React.Children.only(children)(state))
+        }
+
+        return React.createElement(this.$$OnComponent, null, s => render(selector(s)))
     }
 }
 
@@ -57,15 +62,18 @@ export function subscribeOnly (containers, selector = passThrough) {
 }
 
 function makeDecorator (containers, selector, isPure) {
-    const getStates = () => selector(containers.map(c => c.state))
     const Component = isPure ? React.PureComponent : React.Component
+    const getState = () => {
+        const states = selector(containers.map(c => c.state))
+        return states.length === 1 ? states[0] : states
+    }
 
     return Wrapped => {
         class SubscribeWrap extends Component {
             constructor (props) {
                 super(props)
                 this._updateIds = Array(containers.length)
-                this._states = getStates()
+                this._state = getState()
             }
 
             componentDidMount () {
@@ -87,16 +95,16 @@ function makeDecorator (containers, selector, isPure) {
                     const idx = containers.indexOf(container)
                     this._updateIds[idx] = updateId
 
-                    const nextStates = getStates()
-                    if (equal(nextStates, this._states)) return resolve()
+                    const nextState = getState()
+                    if (equal(nextState, this._state)) return resolve()
 
-                    this._states = nextStates
+                    this._state = nextState
                     this.forceUpdate(resolve)
                 })
             }
 
             render () {
-                return React.createElement(Wrapped, { ...this.props, states: this._states })
+                return React.createElement(Wrapped, { ...this.props, state: this._state })
             }
         }
 
