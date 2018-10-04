@@ -58,17 +58,18 @@ export function subscribeOnly (containers, selector = passThrough) {
 
 function makeDecorator (containers, selector, isPure) {
     const Component = isPure ? React.PureComponent : React.Component
-    const getState = () => {
-        const states = selector(containers.map(c => c.state))
-        return states.length === 1 ? states[0] : states
-    }
 
     return Wrapped => {
         class SubscribeWrap extends Component {
             constructor (props) {
                 super(props)
                 this._updateIds = Array(containers.length)
-                this._state = getState()
+                this._state = this.getState()
+            }
+
+            getState () {
+                const states = containers.length === 1 ? containers[0].state : containers.map(c => c.state)
+                return selector(states, this.props)
             }
 
             componentDidMount () {
@@ -90,7 +91,7 @@ function makeDecorator (containers, selector, isPure) {
                     const idx = containers.indexOf(container)
                     this._updateIds[idx] = updateId
 
-                    const nextState = getState()
+                    const nextState = this.getState()
                     if (equal(nextState, this._state)) return resolve()
 
                     this._state = nextState
