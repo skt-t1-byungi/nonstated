@@ -1,5 +1,7 @@
 import React from 'react'
 import equal from 'fast-deep-equal'
+import assign from 'object-assign'
+import includes from '@skt-t1-byungi/array-includes'
 
 const MAX_SAFE_INTEGER = 9007199254740991
 let uuid = 0
@@ -22,7 +24,7 @@ export class Container {
 
             if (!nextState) return
 
-            this.state = { ...prevState, ...Object(nextState) }
+            this.state = assign({}, prevState, Object(nextState))
             return Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(updateId)))
         })
     }
@@ -94,8 +96,7 @@ function makeDecorator (containers, selector, isPure) {
 
             onUpdate (updateId) {
                 return new Promise(resolve => {
-                    if (this._unmounted) return resolve()
-                    if (this._updateIds.includes(updateId)) return resolve()
+                    if (this._unmounted || includes(this._updateIds, updateId)) return resolve()
 
                     const nextState = this.getState()
                     if (equal(nextState, this._state)) return resolve()
@@ -106,7 +107,7 @@ function makeDecorator (containers, selector, isPure) {
             }
 
             render () {
-                return React.createElement(Wrapped, { ...this.props, state: this._state })
+                return React.createElement(Wrapped, assign({}, this.props, { state: this._state }))
             }
         }
 
