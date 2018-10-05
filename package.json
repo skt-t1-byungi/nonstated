@@ -11,7 +11,7 @@
     "scripts": {
         "build": "microbundle --sourcemap false --target browser --external react",
         "test": "ava",
-        "prepublishOnly": "yarn test & yarn build"
+        "prepublishOnly": "yarn build & yarn test"
     },
     "files": [
         "dist"

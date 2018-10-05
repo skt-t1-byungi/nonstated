@@ -92,10 +92,7 @@ function makeDecorator (containers, selector, isPure) {
 
             onUpdate (container, updateId) {
                 return new Promise(resolve => {
-                    if (this._updateIds.indexOf(updateId) > -1) return resolve()
-
-                    const idx = containers.indexOf(container)
-                    this._updateIds[idx] = updateId
+                    if (this._updateIds.includes(updateId)) return resolve()
 
                     const nextState = this.getState()
                     if (equal(nextState, this._state)) return resolve()

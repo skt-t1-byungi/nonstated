@@ -9,10 +9,10 @@ class CounterContainer extends Container {
         this.state = { val: 0 }
     }
     increment () {
-        return this.setState(s => ({ val: s.val + 1 }))
+        return this.setState({ val: this.state.val + 1 })
     }
     decrement () {
-        return this.setState(s => ({ val: s.val - 1 }))
+        return this.setState({ val: this.state.val - 1 })
     }
 }
 
@@ -40,4 +40,29 @@ test('container.on() test', async t => {
     t.is(component.toJSON(), '2')
     await counter.decrement()
     t.is(component.toJSON(), '1')
+})
+
+test.only('nested subscribe', async t => {
+    const counter = new CounterContainer()
+    let calls = 0
+
+    const Child1 = subscribe(counter)(() => {
+        calls++
+        return 'child'
+    })
+
+    const Child2 = subscribe(counter)(() => {
+        calls++
+        return createElement(Child1)
+    })
+
+    const Parent = subscribe(counter)(() => {
+        calls++
+        return createElement(Child2)
+    })
+
+    renderer.create(createElement(Parent))
+    t.is(calls, 3)
+    await counter.increment()
+    t.is(calls, 6)
 })
