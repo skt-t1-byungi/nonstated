@@ -42,7 +42,7 @@ test('container.on() test', async t => {
     t.is(component.toJSON(), '1')
 })
 
-test.only('nested subscribe', async t => {
+test('nested subscribe', async t => {
     const counter = new CounterContainer()
     let calls = 0
 

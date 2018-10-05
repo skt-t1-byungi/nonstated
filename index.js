@@ -23,7 +23,7 @@ export class Container {
             if (!nextState) return
 
             this.state = { ...prevState, ...Object(nextState) }
-            return Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(this, updateId)))
+            return Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(updateId)))
         })
     }
 
@@ -71,6 +71,7 @@ function makeDecorator (containers, selector, isPure) {
                 super(props)
                 this._updateIds = Array(containers.length)
                 this._state = this.getState()
+                this._unmounted = false
             }
 
             getState () {
@@ -83,6 +84,7 @@ function makeDecorator (containers, selector, isPure) {
             }
 
             componentWillUnmount () {
+                this._unmounted = true
                 containers.forEach(container => container.$$unsubscribe(this))
             }
 
@@ -90,8 +92,9 @@ function makeDecorator (containers, selector, isPure) {
                 this._updateIds = containers.map(container => container.$$updateId)
             }
 
-            onUpdate (container, updateId) {
+            onUpdate (updateId) {
                 return new Promise(resolve => {
+                    if (this._unmounted) return resolve()
                     if (this._updateIds.includes(updateId)) return resolve()
 
                     const nextState = this.getState()
