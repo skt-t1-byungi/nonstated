@@ -49,7 +49,7 @@ function Counter () {
 ```
 
 ### subscribe(containers [, selector])
-HOC can be used.
+HOC is also possible.
 ```jsx
 import {subscribe} from 'nonstated'
 
@@ -77,7 +77,7 @@ subscribe([counter, form])(function({ state: [counterState, formState] }) {
 ```
 
 ### subscribeOnly
-Wrap with `React.PureComponent`. Unnecessary render execution is reduced, but does not respond to nested parent container subscriptions.
+Wrap with `React.PureComponent`. Unnecessary render execution is reduced, but does not respond to parent subscriptions.
 ```js
 import {subscribeOnly} from 'nonstated'
 
