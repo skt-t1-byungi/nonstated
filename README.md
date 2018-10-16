@@ -9,7 +9,7 @@ yarn add nonstated
 ```
 
 ### Usage
-```js
+```jsx
 import {Container} from 'nonstated'
 
 class CounterContainer extends Container{
@@ -36,8 +36,8 @@ function Counter () {
 
 ## API
 ### container.on()
-Dynamically subscribes the container state in render.
-```js
+Dynamically subscribe container state within a render.
+```jsx
 function Counter () {
     return (
         <div>
@@ -50,7 +50,7 @@ function Counter () {
 
 ### subscribe(containers [, selector])
 HOC can be used.
-```js
+```jsx
 import {subscribe} from 'nonstated'
 
 subscribe(counter)(function({ state }) {
@@ -60,7 +60,7 @@ subscribe(counter)(function({ state }) {
 
 #### selector
 selector results are passed to the props.
-```js
+```jsx
 const selector = state => state.value
 
 subscribe(counter, selector)(function({ state: value }) {
@@ -77,7 +77,7 @@ subscribe([counter, form])(function({ state: [counterState, formState] }) {
 ```
 
 ### subscribeOnly
-Wrap with `React.PureComponenct`. Unnecessary render execution is reduced, but does not respond to nested parent container subscriptions.
+Wrap with `React.PureComponent`. Unnecessary render execution is reduced, but does not respond to nested parent container subscriptions.
 ```js
 import {subscribeOnly} from 'nonstated'
 
@@ -85,6 +85,7 @@ subscribeOnly(counter)(function({ state }){
     // ...
 })
 ```
+
 
 ## License
 MIT
