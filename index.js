@@ -15,17 +15,17 @@ export class Container {
     }
 
     setState (updater) {
-        return Promise.resolve().then(() => {
+        return new Promise(resolve => {
             if (uuid === MAX_SAFE_INTEGER) uuid = -MAX_SAFE_INTEGER
             const updateId = this.$$updateId = uuid++
 
             const prevState = this.state
             const nextState = typeof updater === 'function' ? updater(prevState) : updater
 
-            if (!nextState) return
+            if (!nextState) return resolve()
 
             this.state = assign({}, prevState, Object(nextState))
-            return Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(updateId)))
+            Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(updateId))).then(resolve, resolve)
         })
     }
 
