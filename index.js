@@ -12,7 +12,11 @@ export class Provider extends React.Component {
     constructor (props) {
         super(props)
         this.containers = this.props.inject || DEFAULT_CONTAINERS
-        this.state = this.containers.reduce((acc, container) => {
+        this.state = this.getState()
+    }
+
+    getState () {
+        return this.containers.reduce((acc, container) => {
             acc[container.$$id] = container.state
             return acc
         }, {})
