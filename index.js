@@ -3,38 +3,57 @@ import equal from 'fast-deep-equal'
 import assign from 'object-assign'
 import includes from '@skt-t1-byungi/array-includes'
 
-const MAX_SAFE_INTEGER = 9007199254740991
+const Context = React.createContext()
+const EMPTY_STATE = {}
+const DEFAULT_CONTAINERS = []
 let uuid = 0
+
+export class Provider extends React.Component {
+    constructor (props) {
+        super(props)
+        this.containers = this.props.inject || DEFAULT_CONTAINERS
+        this.state = this.containers.reduce((acc, container) => {
+            acc[container.$$id] = container.state
+            return acc
+        }, {})
+    }
+
+    componentDidMount () {
+        this.containers.forEach(container => (container.$$provider = this))
+    }
+
+    componentWillUnmount () {
+        this.containers.forEach(container => (container.$$provider = null))
+    }
+
+    setStateById (id, nextState) {
+        return new Promise(resolve => this.setState({ [id]: nextState }, resolve))
+    }
+
+    render () {
+        return <Context.Provider value={this.state}>{this.props.children}</Context.Provider>
+    }
+}
 
 export class Container {
     constructor () {
-        this.state = null
-        this.$$updateId = null
+        this.$$id = uuid++
+        this.$$provider = null
         this.$$Box = null
-        this.$$components = []
+        this.state = EMPTY_STATE
     }
 
-    setState (updater) {
-        return new Promise(resolve => {
-            if (uuid === MAX_SAFE_INTEGER) uuid = -MAX_SAFE_INTEGER
-            const updateId = this.$$updateId = uuid++
-
+    setState (nextState) {
+        if (this.$$provider) {
+            return this.$$provider.setStateById(this.$$id, nextState).then(() => {
+                this.state = this.$$provider.state
+            })
+        } else {
             const prevState = this.state
-            const nextState = typeof updater === 'function' ? updater(prevState) : updater
-
-            if (!nextState) return resolve()
-
-            this.state = assign({}, prevState, Object(nextState))
-            Promise.all(this.$$components.slice().reverse().map(c => c.onUpdate(updateId))).then(resolve, resolve)
-        })
-    }
-
-    $$subscribe (component) {
-        this.$$components.push(component)
-    }
-
-    $$unsubscribe (component) {
-        this.$$components = this.$$components.filter(c => c !== component)
+            nextState = typeof nextState === 'function' ? nextState(prevState) : nextState
+            this.state = assign({}, prevState, nextState)
+            return Promise.resolve()
+        }
     }
 
     on (selector, render) {
@@ -57,7 +76,7 @@ function passThrough (v) {
 }
 
 export function subscribe (containers, selector = passThrough) {
-    return makeDecorator([].concat(containers), selector)
+    return makeDecorator([].concat(containers), selector, false)
 }
 
 export function subscribeOnly (containers, selector = passThrough) {
@@ -65,52 +84,37 @@ export function subscribeOnly (containers, selector = passThrough) {
 }
 
 function makeDecorator (containers, selector, isPure) {
+    DEFAULT_CONTAINERS.push(...containers.filter(c => !includes(DEFAULT_CONTAINERS, c)))
+
     const Component = isPure ? React.PureComponent : React.Component
 
-    return Wrapped => {
+    return Wrapped =>
         class SubscribeWrap extends Component {
             constructor (props) {
                 super(props)
-                this._updateIds = Array(containers.length)
-                this._state = this.getState()
-                this._unmounted = false
-            }
-
-            getState () {
-                const states = containers.length === 1 ? containers[0].state : containers.map(c => c.state)
-                return (this.props.__selector__ || selector)(states, this.props)
-            }
-
-            componentDidMount () {
-                containers.forEach(container => container.$$subscribe(this))
-            }
-
-            componentWillUnmount () {
-                this._unmounted = true
-                containers.forEach(container => container.$$unsubscribe(this))
-            }
-
-            componentDidUpdate () {
-                this._updateIds = containers.map(container => container.$$updateId)
-            }
-
-            onUpdate (updateId) {
-                return new Promise(resolve => {
-                    if (this._unmounted || includes(this._updateIds, updateId)) return resolve()
-
-                    const nextState = this.getState()
-                    if (equal(nextState, this._state)) return resolve()
-
-                    this._state = nextState
-                    this.forceUpdate(resolve)
-                })
+                this.renderedChildren = null
+                this.prevState = null
+                this.renderHandler = this.renderHandler.bind(this)
             }
 
             render () {
-                return React.createElement(Wrapped, assign({}, this.props, { state: this._state }))
+                return <Context.Consumer>{this.renderHandler}</Context.Consumer>
+            }
+
+            renderHandler (providerState) {
+                const currState = this.mapState(providerState)
+
+                if (!this.renderedChildren || !equal(currState, this.prevState)) {
+                    this.renderedChildren = React.createElement(Wrapped, assign({}, this.props, { state: currState }))
+                    this.prevState = currState
+                }
+
+                return this.renderedChildren
+            }
+
+            mapState (providerState) {
+                const state = containers.map(c => providerState[c.$$id])
+                return (this.props.__selector__ || selector)(state.length === 1 ? state[0] : state, this.props)
             }
         }
-
-        return SubscribeWrap
-    }
 }
