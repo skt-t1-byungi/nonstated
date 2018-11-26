@@ -10,7 +10,7 @@ yarn add nonstated
 
 ### Usage
 ```jsx
-import {Container, Provider} from 'nonstated'
+import {Container} from 'nonstated'
 
 class CounterContainer extends Container{
     state = {value: 0}
@@ -23,13 +23,6 @@ class CounterContainer extends Container{
 }
 
 const counter = new CounterContainer()
-
-function App(){
-    return (
-        <Provider>
-            <Counter />
-        </Provider>)
-}
 
 function Counter () {
     return (
