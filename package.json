@@ -19,11 +19,11 @@
         "index.d.ts"
     ],
     "devDependencies": {
-        "ava": "^0.25.0",
+        "ava": "^1.1.0",
         "eslint": "^5.6.1",
         "eslint-config-byungi": "^0.2.1",
         "esm": "^3.0.84",
-        "microbundle": "^0.6.0",
+        "microbundle": "^0.9.0",
         "react": "^16.5.2",
         "react-test-renderer": "^16.5.2"
     },
