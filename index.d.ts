@@ -16,7 +16,12 @@ type Selector<Containers, Result> = (state:
     : Containers extends Array<Container<any>> ? any
     : Containers extends Container<infer R> ? R : any) => Result
 
-type ContainerTuple = [] | Array<Container<any>>
+type ContainerTuple = [Container<any>]
+    | [Container<any>, Container<any>]
+    | [Container<any>, Container<any>, Container<any>]
+    | [Container<any>, Container<any>, Container<any>, Container<any>]
+    | [Container<any>, Container<any>, Container<any>, Container<any>, Container<any>]
+    | Array<Container<any>>
 
 export declare function subscribe<Props, State, Containers extends Container<any> | ContainerTuple>(
     containers: Containers, selector?: Selector<Containers, State>
