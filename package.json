@@ -2,6 +2,7 @@
     "name": "nonstated",
     "version": "0.0.8",
     "main": "dist/index.js",
+    "types": "index.d.ts",
     "umd:main": "dist/index.umd.js",
     "module": "dist/index.mjs",
     "source": "index.js",
@@ -14,7 +15,8 @@
         "prepublishOnly": "yarn build & yarn test"
     },
     "files": [
-        "dist"
+        "dist",
+        "index.d.ts"
     ],
     "devDependencies": {
         "ava": "^0.25.0",
@@ -27,6 +29,7 @@
     },
     "dependencies": {
         "@skt-t1-byungi/array-includes": "^0.1.0",
+        "@types/react": "^16.7.20",
         "fast-deep-equal": "^2.0.1",
         "object-assign": "^4.1.1"
     },
