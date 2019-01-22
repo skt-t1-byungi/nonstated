@@ -1,6 +1,6 @@
 {
     "name": "nonstated",
-    "version": "0.0.9",
+    "version": "0.1.1",
     "main": "dist/index.js",
     "types": "index.d.ts",
     "umd:main": "dist/index.umd.js",
